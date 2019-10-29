@@ -56,8 +56,7 @@ def evaluate_model(dataset, save_file, random_state, est, hyper_params):
 
             model=[]
 
-#            if(est_name=='ManiGPClassifier'):
-            if(est_name=='ManiGP4Classifier'):
+            if(est_name=='ManiGPClassifier'):
 
               model=[str(clf.model[0]), str(clf.model[1])]
             else:
