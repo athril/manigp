@@ -153,7 +153,7 @@ class ManiGPClassifier(BaseEstimator):
 
 
 #  def __init__(self, mutpb=0.9, cxpb=0.1, pop_size=100, n_iter=500, tourn_size=7, weights = (1.0,),min_tree_height = 1, max_tree_height = 5, n_components = 2, random_state=3319):
-  def __init__(self, mutpb=0.9, cxpb=0.1, pop_size=100, n_iter=500, tourn_size=7, weights = (1.0,),min_tree_height = 1, max_tree_height = 5, n_components = 2, random_state=3319):
+  def __init__(self, mutpb=0.9, cxpb=0.1, pop_size=100, n_iter=500, tourn_size=7, weights = (1.0,),min_tree_height = 1, max_tree_height = 4, n_components = 2, random_state=3319):
     self.mutpb=mutpb
     self.cxpb=cxpb
     self.pop_size=pop_size
