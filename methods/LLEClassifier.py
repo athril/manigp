@@ -50,7 +50,7 @@ class LLEClassifier(BaseEstimator):
     y_pred = list(map(self.mapping.get, labels))
     return y_pred
 
-est = LLEClassifier()
+est = LLEClassifier(eigen_solver='dense')
 
 hyper_params={
    'reg' : [0.00001, 0.0001, 0.001, 0.1, 1, 10],
