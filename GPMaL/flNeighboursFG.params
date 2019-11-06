@@ -78,7 +78,7 @@ eval.problem.data = gp.DoubleData
 
 evalthreads = 6
 breedthreads=6
-generations = 5
+generations = 1000
 pop.subpop.0.size = 1024
 
 breed.reproduce.source.0 = ec.select.TournamentSelection

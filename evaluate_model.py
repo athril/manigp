@@ -33,8 +33,16 @@ def evaluate_model(dataset, save_file, random_state, est, hyper_params):
     
     # Grid Search
     with warnings.catch_warnings():
+#        warnings.simplefilter("ignore")
+        # grid_est.fit(X_train,y_train)
         param_grid = list(ParameterGrid(hyper_params))
+        #clone estimators
+        #Clfs = [clone(est).set_params(**p) for p in param_grid]
         Clfs = [copy.deepcopy(est).set_params(**p) for p in param_grid]
+#        results=[]
+        
+        
+
 
         for clf in Clfs:
 
@@ -42,7 +50,10 @@ def evaluate_model(dataset, save_file, random_state, est, hyper_params):
             for a in ['random_state','seed']:
                 if hasattr(clf,a):
                     setattr(clf,a,random_state)
+            if (est_name=='GPMaLClassifier'):
+              setattr(clf,'dataset',dataset)
             print('running',clf.get_params(),'...')
+                    # clf.random_state = random_state
             # get the CV score on the training data
             start=time()
             clf.fit(X_train, y_train)
@@ -57,11 +68,11 @@ def evaluate_model(dataset, save_file, random_state, est, hyper_params):
             model=[]
 
             if(est_name=='ManiGPClassifier'):
-
               model=[str(clf.model[0]), str(clf.model[1])]
             else:
               model=['','']
 
+                            
             results=[{
                    'dataset' : dataname,
                    'seed' : random_state,
@@ -76,6 +87,18 @@ def evaluate_model(dataset, save_file, random_state, est, hyper_params):
             # print results
             df = pd.DataFrame.from_records(data=results,columns=results[0].keys())
             df.to_csv(save_file, index=False,header=False,mode='a')
+#    df['seed'] = random_state
+#    df['dataset'] = dataname
+#    df['algorithm'] = est_name
+#    df['parameters_hash'] = df['parameters'].apply(lambda x:
+#        hash(frozenset(x.items())))
+#    print('dataframe columns:',df.columns)
+#    print(df[:10])
+#    if os.path.isfile(save_file):
+#        # if exists, append
+#        df.to_csv(save_file, mode='a', header=False, index=False)
+#    else:
+#        df.to_csv(save_file, index=False)
 
 
 ################################################################################
@@ -102,8 +125,20 @@ if __name__ == '__main__':
             type=int, help='Seed / trial')
 
     args = parser.parse_args()
+    # import algorithm 
+#    print('import from','methods.'+args.ALG)
     algorithm = importlib.__import__('methods.'+ args.ALG, globals(),locals(),
                                    ['est','hyper_params'])
+
+    #est=ManiGPClassifier()
+
+#    print('algorithm:',algorithm.est)
+#    print('hyperparams:',algorithm.hyper_params)
+
+#    text='\t'.join([str(args.INPUT_FILE), ' ', str(args.SAVE_FILE), ' ', str(args.RANDOM_STATE), ' ',
+#                   str(algorithm.est), ' ', str(algorithm.hyper_params)])
+#    print(text)
+
 
     evaluate_model(args.INPUT_FILE, args.SAVE_FILE, args.RANDOM_STATE, 
                    algorithm.est, algorithm.hyper_params)
