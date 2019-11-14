@@ -17,8 +17,7 @@ from utils.munkres import Munkres, make_cost_matrix
 
 class GPMaLClassifier(BaseEstimator):
 
-  def __init__(self, dataset='', n_components=2, n_clusters=2, g=1000, popsize=1024, n_jobs=1, random_state=3319):
-    #notice that g,popsize are not propagated to the method and need to be set in .param file
+  def __init__(self, dataset='', n_components=2, n_clusters=2, g=10, popsize=100, n_jobs=1, random_state=3319):
     env = dict(os.environ)
     self.dataset = dataset
     self.n_components=n_components
@@ -40,12 +39,17 @@ class GPMaLClassifier(BaseEstimator):
     data.to_csv(self.path+"/"+self.dataset+"."+str(self.random_state)+"-train",header=None, index=None, mode='a', sep=',')
     #two empty lines at the end, adding header
     #java code returns many lines, the result ends in the last ones
-    z=subprocess.check_output(['java', '-cp', 'GPMaL/gp-mal-eurogp-19-bin.jar', 'featureLearn.RunGPMaL', 'dataset='+os.getcwd()+"/"+self.dataset+'.'+str(self.random_state)+'-train', 'numtrees=2', 'preprocessing=none', 'logPrefix='+self.dataset+'-train', 'treeDepth=8', 'featureMin=0', 'featureMax=1', 'normalisePostCreation=false', 'scalePostCreation=false', 'roundPostCreation=true', 'featureLearnParamFile=GPMaL/flNeighboursFG.params', 'doNNs=false', 'n_jobs='+str(self.n_jobs), 'random_state='+str(self.random_state)]).decode("utf-8").split('\n')[-X.shape[0]-3:-2]
+    z=subprocess.check_output(['java', '-cp', 'GPMaL/gp-mal-eurogp-19-bin.jar', 'featureLearn.RunGPMaL', 'dataset='+os.getcwd()+"/"+self.dataset+'.'+str(self.random_state)+'-train', 'numtrees=2', 'preprocessing=none', 'logPrefix='+self.dataset+'-train', 'treeDepth=8', 'featureMin=0', 'featureMax=1', 'normalisePostCreation=false', 'scalePostCreation=false', 'roundPostCreation=true', 'featureLearnParamFile=GPMaL/flNeighboursFG.params', 'doNNs=false', 'n_jobs='+str(self.n_jobs), 'random_state='+str(self.random_state)]).decode("utf-8")
+    print(str(z))
+    z=z.split('\n')[-X.shape[0]-3:-2]
     #loading the data into pandas df
     X_new=pd.read_csv(StringIO('\n'.join(z)), sep=',')
+
     X_new.drop('class', axis=1, inplace=True)
-    for f in range(0,X.shape[1]-1):
+#    for f in range(0,X.shape[1]-1):
+    for f in range(0,X_new.shape[1]-self.n_components):
       X_new.drop('F'+str(f), axis=1, inplace=True)
+    print(X_new)
     self.centroids=KMeans(n_clusters=self.n_clusters, random_state=self.random_state).fit(X_new)
     labels = self.centroids.predict(X_new)
     confusion_m = confusion_matrix(y, labels)
@@ -66,19 +70,21 @@ class GPMaLClassifier(BaseEstimator):
     data.to_csv(self.path+"/"+self.dataset+"."+str(self.random_state)+"-test",header=None, index=None, mode='a', sep=',')
     #here 1 empty line at the end, extending to label line
     #java code returns many lines, the result ends in the last ones
-    z=subprocess.check_output(['java', '-cp', 'GPMaL/gp-mal-eurogp-19-bin.jar', 'featureLearn.LoadAndApplyModel', 'dataset='+os.getcwd()+"/"+self.dataset+"."+str(self.random_state)+'-test', 'model='+os.getcwd()+"/"+self.dataset+'.'+str(self.random_state)+'-train-gpmal.state','numtrees=2', 'preprocessing=none', 'logPrefix=fLNeighboursFG/', 'treeDepth=8', 'featureMin=0', 'featureMax=1', 'normalisePostCreation=false', 'scalePostCreation=false', 'roundPostCreation=true', 'featureLearnParamFile=GPMaL/flNeighboursFG.params', 'doNNs=false', 'n_jobs='+str(self.n_jobs), 'random_state='+str(self.random_state)]).decode("utf-8").split('\n')[-X.shape[0]-2:-1]
-
+    z=subprocess.check_output(['java', '-cp', 'GPMaL/gp-mal-eurogp-19-bin.jar', 'featureLearn.LoadAndApplyModel', 'dataset='+os.getcwd()+"/"+self.dataset+"."+str(self.random_state)+'-test', 'model='+os.getcwd()+"/"+self.dataset+'.'+str(self.random_state)+'-train-gpmal.state','numtrees=2', 'preprocessing=none', 'logPrefix=fLNeighboursFG/', 'treeDepth=8', 'featureMin=0', 'featureMax=1', 'normalisePostCreation=false', 'scalePostCreation=false', 'roundPostCreation=true', 'featureLearnParamFile=GPMaL/flNeighboursFG.params', 'doNNs=false', 'n_jobs='+str(self.n_jobs), 'random_state='+str(self.random_state)]).decode("utf-8")
+    print(str(z))
+    z=z.split('\n')[-X.shape[0]-2:-1]
     X_trans=pd.read_csv(StringIO('\n'.join(z)), sep=',')
-    for f in range(0,X.shape[1]-1):
+    #for f in range(0,X.shape[1]-1):
+    for f in range(0,X_trans.shape[1]-self.n_components):
       X_trans.drop('F'+str(f), axis=1, inplace=True)
-
+    print(X_trans)
     labels = self.centroids.predict(X_trans)
     y_pred = list(map(self.mapping.get, labels))
     return y_pred
 
 est=GPMaLClassifier()
 
-#GMaL wrapper is not very tunable. Changes in configuration need to be made to .param files
+#GMaL is not very tunable. Changes in configuration need to be made to .param files
 #TODO: add relevant modifications
 hyper_params={
   'n_components':[2]
